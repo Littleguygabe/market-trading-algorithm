@@ -109,6 +109,7 @@ if __name__ == '__main__':
     forecast_horizons = args.horizons
     should_save_model = args.save_model
     target_column = args.target
+    print(forecast_horizons)
     print('>--------------------')
     print('Running XGboost Algorithm')
     model,input_features,r2 = run(target_column)
