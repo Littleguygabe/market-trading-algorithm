@@ -6,7 +6,7 @@ import sys
 import numpy as np
 
 # Use relative imports for modules within the same package
-from . import generatePredictionDataframes as GPD
+from .backtestingAlgos import generatePredictionDataframes as GPD
 from .backtestingAlgos.plotBacktestingResults import plotResults
 from .backtestingAlgos import loadSyntheticData
 

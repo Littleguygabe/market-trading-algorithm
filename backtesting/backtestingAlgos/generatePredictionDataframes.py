@@ -9,9 +9,6 @@ from functools import partial
 # Absolute import from the project root to the sibling package
 from modelPrediction import predictionPipeline as predPipeline
 # Relative import to a module inside the current package
-from .backtestingAlgos.loading_bar import loading_bar
-
-from .debugOrderAlgo import run as DOA
 
 def getFileLocation(file_name):
     if os.path.exists(file_name):
