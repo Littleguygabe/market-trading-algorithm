@@ -1,0 +1,93 @@
+import os
+import yfinance as yf
+import sys
+import pandas as pd
+from pathlib import Path
+from dataPipelineAlgos.loading_bar import loading_bar
+
+def getFileLocation(file_name):
+    if os.path.exists(file_name):
+        return file_name
+    
+    dirs_to_check = []
+    script_dir = Path(__file__) #already checked
+    root_dir = script_dir.parent #same level as datapipelinefolder
+
+    dirs_to_check.append(root_dir)
+
+    root_parent_dir = root_dir.parent
+    dirs_to_check.append(root_parent_dir) #check if its main project dir
+
+    project_dir = root_parent_dir.parent
+    dirs_to_check.append(project_dir)
+
+    dirs_to_check.append(os.path.join(project_dir,'shareddata')) #check if its in the shared data folder
+
+    for directory in dirs_to_check:
+        current_path = os.path.join(directory,file_name)
+        print(f'checking > {current_path}')
+        if os.path.exists(current_path):
+            return current_path
+        
+    
+    print('ERROR> Could not find the Ticker List file in Current, Child or Parent Directory')
+    sys.exit(1)
+    
+
+def handleTxtTickerFile(ticker_file):
+    file_path = getFileLocation(ticker_file)
+    with open(file_path,'r') as f:
+        contents = f.read()
+        f.close()
+
+    ticker_list = contents.split('\n')
+    return ticker_list
+
+def handleCsvTickerFile(ticker_file):
+    file_path = getFileLocation(ticker_file)
+    df = pd.read_csv(file_path)
+
+    ticker_list = df['Ticker'].to_numpy()
+
+    return ticker_list
+
+
+def getTickerListFromFile(ticker_file):
+    name,extension = os.path.splitext(ticker_file)
+    if extension=='.txt':
+        ticker_list = handleTxtTickerFile(ticker_file)
+
+    elif extension=='.csv':
+        ticker_list = handleCsvTickerFile(ticker_file)
+
+    else:
+        print(f'ERROR > File Extension must be `.txt` or `.csv` not: {extension}')
+        sys.exit(1)
+
+    return ticker_list
+
+def getRawTickerData(ticker_list):
+    df_arr = []
+    for i in range(len(ticker_list)):
+        loading_bar(i,len(ticker_list))
+        ticker = ticker_list[i]
+        ticker_obj = yf.Ticker(ticker)
+        data = ticker_obj.history(period='1500d',interval='1d')
+        data['Ticker'] = ticker
+        df_arr.append(data)
+
+    return df_arr
+
+
+
+
+def run(ticker_file):
+    print('>--------------------')
+    print('\033[1mRunning handleRawDataCollection.py\033[0m')
+    print('Getting list of Tickers')
+    ticker_list = getTickerListFromFile(ticker_file)
+    print('Retrieved Ticker List')
+    print('Getting raw data')
+    raw_data_array = getRawTickerData(ticker_list)  
+    print('\nAll raw data Retrieved')
+    return raw_data_array

@@ -1,0 +1,15 @@
+SMA10_norm_rel
+EMA10_norm_rel
+GARCH_volatility_100x
+Return
+LBClsPctDif
+GARCH_scaled_return
+Loss_norm
+SMA20_norm_rel
+Gain_norm
+GARCH_volatility_mult
+normMACDSIGdif
+10to50_EMA_norm_diff
+MACDline_norm
+10to50_SMA_norm_diff
+Volume_norm
