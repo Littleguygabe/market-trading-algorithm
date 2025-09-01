@@ -3,6 +3,8 @@ from pathlib import Path
 import pandas as pd
 import inquirer
 from tqdm import tqdm
+import multiprocessing
+from functools import partial
 
 # Absolute import from the project root to the sibling package
 from modelPrediction import predictionPipeline as predPipeline
@@ -48,33 +50,53 @@ def readDirectory(data_path):
 
     return raw_df_arr
 
+def init_worker(df):
+    global worker_df
+    worker_df = df
+
+def workerPredictionFunction(end_idx,model_to_use,horizon):
+    start_idx = 0
+
+    working_df = worker_df.iloc[start_idx:end_idx]
+
+    orderval,indicator = predPipeline.run(model_to_use,ticker=None,generate_order=True,horizon=horizon,verbose=-1,back_testing_data=working_df)
+    # print(orderval)
+    # take the risk df and decide how much of the stock to buy
+    # add the current Close price to the amount of the stock to buy and
+
+    current_date = working_df.index[-1]
+    current_close = working_df['Close'].iloc[-1]
+
+    return_dict = {
+        'Date': current_date,
+        'Close': current_close,
+        'Indicator': indicator,
+        'OrderVal ($)': orderval,
+        'Ticker': working_df['Ticker'].iloc[-1]
+    }
+
+    return return_dict
+
 def getPredictionDataframe(df,model_to_use,horizon):
-    output_arr = []
-    for i in tqdm(range(201,len(df))):
-        working_df = df[:i]
+# parallelise the production of the prediction data frames -> use the same modules as the RFE parallelisation
 
-        #pass the working df into the prediction pipeline to get a risk data frame
-        orderval,indicator = predPipeline.run(model_to_use,ticker=None,generate_order=True,horizon=horizon,verbose=-1,back_testing_data=working_df)
-        # print(orderval)
-        # take the risk df and decide how much of the stock to buy
-        # add the current Close price to the amount of the stock to buy and
+    data_size = len(df)-200
+    min_window_size = 75
+    tasks = [i for i in range(min_window_size+1,len(df)+1)]
+    num_cores = multiprocessing.cpu_count()
 
-        current_date = df.index[i]
-        current_close = df['Close'].iloc[i]
+    #allows us to not have to pass in multiple arguments when 2/3 are constant
+    partial_worker_func = partial(
+        workerPredictionFunction,
+        model_to_use=model_to_use,
+        horizon=horizon
+    ) 
 
-        output_arr.append({
-            'Date': current_date,
-            'Close': current_close,
-            'Indicator': indicator,
-            'OrderVal ($)': orderval,
-            'Ticker': df['Ticker'].iloc[i]
-        })
+    with multiprocessing.Pool(processes=num_cores,initializer=init_worker,initargs=(df,)) as pool:
+        results = list(tqdm(pool.map(partial_worker_func,tasks),total=data_size))
 
 
-    # output df in format:
-        # Date Close Indicator -1/1 (sell/buy) OrderVal ($) Ticker
-
-    return pd.DataFrame(output_arr)
+    return pd.DataFrame(results)
 
 def run(data_folder,starting_cap,horizon):
     data_path = getFileLocation(data_folder)
@@ -97,4 +119,4 @@ def run(data_folder,starting_cap,horizon):
         predictions_df_arr.append(pred_dataframe)
 
     print(predictions_df_arr)
-    quit()
+    return predictions_df_arr 

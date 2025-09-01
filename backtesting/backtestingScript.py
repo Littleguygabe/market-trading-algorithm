@@ -141,6 +141,8 @@ if __name__ == '__main__':
 
 ####### end of generating the model prediction data frames
 
+    print('made it back to backtesting script')
+    quit()
     total_portfolio_profit = 0
     portfolio_tracking_df_arr = []
     for df in df_arr:
