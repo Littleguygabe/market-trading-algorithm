@@ -68,6 +68,7 @@ def workerPredictionFunction(end_idx,model_to_use,horizon):
     current_close = working_df['Close'].iloc[-1]
 
     return_dict = {
+        'idx':end_idx,
         'Date': current_date,
         'Close': current_close,
         'Indicator': indicator,
@@ -80,9 +81,10 @@ def workerPredictionFunction(end_idx,model_to_use,horizon):
 def getPredictionDataframe(df,model_to_use,horizon):
 # parallelise the production of the prediction data frames -> use the same modules as the RFE parallelisation
 
-    data_size = len(df)-200
+    print('Initialising Parallelisation Algorithm')
+
     min_window_size = 75
-    tasks = [i for i in range(min_window_size+1,len(df)+1)]
+    tasks = [i for i in range(min_window_size,len(df)+1)]
     num_cores = multiprocessing.cpu_count()
 
     #allows us to not have to pass in multiple arguments when 2/3 are constant
@@ -92,11 +94,15 @@ def getPredictionDataframe(df,model_to_use,horizon):
         horizon=horizon
     ) 
 
-    with multiprocessing.Pool(processes=num_cores,initializer=init_worker,initargs=(df,)) as pool:
-        results = list(tqdm(pool.map(partial_worker_func,tasks),total=data_size))
+    results = []
+    with multiprocessing.Pool(processes=num_cores, initializer=init_worker, initargs=(df,)) as pool:
+        pbar = tqdm(pool.imap_unordered(partial_worker_func, tasks), total=len(tasks))
+        for result in pbar:
+            results.append(result)
 
-
-    return pd.DataFrame(results)
+    results.sort(key=lambda x: x['idx'])
+    
+    return pd.DataFrame(results).drop('idx')
 
 def run(data_folder,starting_cap,horizon):
     data_path = getFileLocation(data_folder)
@@ -113,7 +119,7 @@ def run(data_folder,starting_cap,horizon):
     predictions_df_arr = []
     print('Generating Predictions on the Provided Historical data')
     for i in range(len(raw_data_df_arr)):
-        print(raw_data_df_arr[i]['Ticker'].iloc[1])
+        print(f'Processing > {raw_data_df_arr[i]['Ticker'].iloc[1]}')
         df = raw_data_df_arr[i]
         pred_dataframe = getPredictionDataframe(df,model_to_use,horizon)
         predictions_df_arr.append(pred_dataframe)
