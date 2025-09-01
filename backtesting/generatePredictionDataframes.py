@@ -11,6 +11,8 @@ from modelPrediction import predictionPipeline as predPipeline
 # Relative import to a module inside the current package
 from .backtestingAlgos.loading_bar import loading_bar
 
+from .debugOrderAlgo import run as DOA
+
 def getFileLocation(file_name):
     if os.path.exists(file_name):
         return file_name
@@ -60,6 +62,9 @@ def workerPredictionFunction(end_idx,model_to_use,horizon):
     working_df = worker_df.iloc[start_idx:end_idx]
 
     orderval,indicator = predPipeline.run(model_to_use,ticker=None,generate_order=True,horizon=horizon,verbose=-1,back_testing_data=working_df)
+
+    # orderval,indicator = DOA()
+
     # print(orderval)
     # take the risk df and decide how much of the stock to buy
     # add the current Close price to the amount of the stock to buy and
@@ -72,7 +77,7 @@ def workerPredictionFunction(end_idx,model_to_use,horizon):
         'Date': current_date,
         'Close': current_close,
         'Indicator': indicator,
-        'OrderVal ($)': orderval,
+        'OrderVal': orderval,
         'Ticker': working_df['Ticker'].iloc[-1]
     }
 
@@ -86,7 +91,6 @@ def getPredictionDataframe(df,model_to_use,horizon):
     min_window_size = 75
     tasks = [i for i in range(min_window_size,len(df)+1)]
     num_cores = multiprocessing.cpu_count()
-
     #allows us to not have to pass in multiple arguments when 2/3 are constant
     partial_worker_func = partial(
         workerPredictionFunction,
@@ -102,7 +106,7 @@ def getPredictionDataframe(df,model_to_use,horizon):
 
     results.sort(key=lambda x: x['idx'])
     
-    return pd.DataFrame(results).drop('idx')
+    return pd.DataFrame(results)
 
 def run(data_folder,starting_cap,horizon):
     data_path = getFileLocation(data_folder)
@@ -119,10 +123,10 @@ def run(data_folder,starting_cap,horizon):
     predictions_df_arr = []
     print('Generating Predictions on the Provided Historical data')
     for i in range(len(raw_data_df_arr)):
-        print(f'Processing > {raw_data_df_arr[i]['Ticker'].iloc[1]}')
+        ticker = raw_data_df_arr[i]['Ticker'].iloc[1]
+        print(f'Processing > {ticker}')
         df = raw_data_df_arr[i]
         pred_dataframe = getPredictionDataframe(df,model_to_use,horizon)
         predictions_df_arr.append(pred_dataframe)
 
-    print(predictions_df_arr)
     return predictions_df_arr 

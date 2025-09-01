@@ -39,7 +39,6 @@ def runBackTesting(df, starting_capital):
     tracking_rows = []
     last_row = None
     for row in df.itertuples():
-        # --- BUY LOGIC ---
         if row.Indicator == 1:
             order_val = min(row.OrderVal, portfolio['cash']) # Don't spend cash you don't have
             if order_val > 0:
@@ -50,7 +49,7 @@ def runBackTesting(df, starting_capital):
                     portfolio['sharesOwned'] += N_new_shares
                     portfolio['cash'] -= order_val
 
-        # --- SELL LOGIC ---
+        # SELL LOGIC 
         elif row.Indicator == -1:
             if portfolio['sharesOwned'] > 0.0:
                 N_sold_shares = min(np.round(row.OrderVal / portfolio['avgSharePrice'], 5), portfolio['sharesOwned'])
@@ -74,21 +73,20 @@ def runBackTesting(df, starting_capital):
         tracking_rows.append(metrics_dict)
         last_row = row
 
-    # --- FINAL LIQUIDATION ---
+    # FINAL LIQUIDATION 
     if portfolio['sharesOwned'] > 1e-9 and last_row is not None:
         cash_from_sale = portfolio['sharesOwned'] * last_row.Close
         return_on_trade = cash_from_sale - (portfolio['sharesOwned'] * portfolio['avgSharePrice'])
         
-        # FIX: Update final portfolio state
+        # Update final portfolio state
         portfolio['total_return'] += return_on_trade
         portfolio['cash'] += cash_from_sale
         portfolio['sharesOwned'] = 0
         portfolio['portfolio_val'] = portfolio['cash'] # Final value is just cash
         
-        # FIX: Append the true final state
-        metrics_dict = portfolio.copy()
-        metrics_dict['Date'] = last_row.Date
-        tracking_rows.append(metrics_dict)
+        # Update the last recorded metrics with the final liquidated state
+        if tracking_rows:
+            tracking_rows[-1].update(portfolio)
 
     tracking_df = pd.DataFrame(tracking_rows)
     # The final profit/loss
@@ -141,8 +139,7 @@ if __name__ == '__main__':
 
 ####### end of generating the model prediction data frames
 
-    print('made it back to backtesting script')
-    quit()
+    print('Calculating Model Profitability')
     total_portfolio_profit = 0
     portfolio_tracking_df_arr = []
     for df in df_arr:
@@ -154,20 +151,35 @@ if __name__ == '__main__':
         capital_per_stock = args.starting_capital / len(df_arr)
         profit, tracking_df = runBackTesting(df, capital_per_stock)
         total_portfolio_profit += profit
-
-        # --- Simplified and Correct Cumulative Return Calculation ---
-        if not tracking_df.empty:
-            # 1. Calculate daily returns from the correct portfolio value column
-            tracking_df['daily_return'] = tracking_df['portfolio_val'].pct_change()
-    
-            # 2. Calculate cumulative return
-            tracking_df['cumulative_return'] = (1 + tracking_df['daily_return'].fillna(0)).cumprod() - 1
-        
         portfolio_tracking_df_arr.append(tracking_df)
 
     print(f'Total Strategy Profit: ${total_portfolio_profit:,.2f}')
 
     if args.plot_results:
-        plotResults(portfolio_tracking_df_arr)
+        daily_total_portfolio_value = {}
+        
+        # Sum portfolio values across all individual backtests for each day
+        for df in portfolio_tracking_df_arr:
+            if not df.empty and 'Date' in df.columns and 'portfolio_val' in df.columns:
+                for _, row in df.iterrows():
+                    date = row['Date']
+                    value = row['portfolio_val']
+                    daily_total_portfolio_value[date] = daily_total_portfolio_value.get(date, 0) + value
+
+        if daily_total_portfolio_value:
+            # Create a single DataFrame for the total portfolio's value over time
+            total_tracking_df = pd.DataFrame(
+                list(daily_total_portfolio_value.items()),
+                columns=['Date', 'portfolio_val']
+            ).sort_values(by='Date').reset_index(drop=True)
+
+            # --- Correct Cumulative Return Calculation ---
+            # Calculate return based on the total aggregated portfolio value vs. the total starting capital.
+            total_tracking_df['cumulative_return'] = (total_tracking_df['portfolio_val'] / args.starting_capital) - 1
+
+            # Pass the single, aggregated DataFrame to the plotting function
+            plotResults([total_tracking_df])
+        else:
+            print("No tracking data available to plot.")
 
 
