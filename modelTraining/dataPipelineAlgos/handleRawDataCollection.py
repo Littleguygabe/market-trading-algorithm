@@ -3,7 +3,7 @@ import yfinance as yf
 import sys
 import pandas as pd
 from pathlib import Path
-from dataPipelineAlgos.loading_bar import loading_bar
+from tqdm import tqdm
 
 def getFileLocation(file_name):
     if os.path.exists(file_name):
@@ -68,8 +68,7 @@ def getTickerListFromFile(ticker_file):
 
 def getRawTickerData(ticker_list):
     df_arr = []
-    for i in range(len(ticker_list)):
-        loading_bar(i,len(ticker_list))
+    for i in tqdm(range(len(ticker_list))):
         ticker = ticker_list[i]
         ticker_obj = yf.Ticker(ticker)
         data = ticker_obj.history(period='1500d',interval='1d')

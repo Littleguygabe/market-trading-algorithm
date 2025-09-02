@@ -10,6 +10,8 @@ def saveInputData(feature_dataframe_arr,ref_results):
     if not os.path.exists(save_folder_name):
         os.mkdir(save_folder_name)
 
+    print(df)
+    
     for df in feature_dataframe_arr:
         ticker = df['Ticker'].iloc[0]
         save_df = df[ref_results]

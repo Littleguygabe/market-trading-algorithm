@@ -36,7 +36,7 @@ def run(target_Col):
     
     df = dataRead(target_Col)
 
-    X = df.drop(columns=['Target'])
+    X = df.drop(columns=['Target','Date'])
     y = df['Target']
 
     print(f'Training dataset: {X}')
