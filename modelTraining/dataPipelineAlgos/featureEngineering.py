@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
-from dataPipelineAlgos.loading_bar import loading_bar
+from tqdm import tqdm
 
 ### figure out which data values need normalising and normalise them
 
@@ -117,8 +117,7 @@ def getFeatureData(rawdf,target_col):
     'lowerBand', 'OBV'
 ]
 
-    feature_df = rolling_normalisation(rawdf,features_to_normalise) 
-
+    feature_df = rolling_normalisation(rawdf,features_to_normalise)
 
     final_feature_columns = [
     'Date',
@@ -164,9 +163,9 @@ def run(raw_data_frame_arr,target_col):
     print('>--------------------')
     print('\033[1mRunning featureEngineering.py\033[0m')
     engineered_df_arr = []
-    for i in range(len(raw_data_frame_arr)):
-        loading_bar(i,len(raw_data_frame_arr))
-        engineered_df_arr.append(getFeatureData(raw_data_frame_arr[i],target_col))
+    for i in tqdm(range(len(raw_data_frame_arr))):
+
+        engineered_df_arr.append(getFeatureData(raw_data_frame_arr[i].reset_index(),target_col))
 
     print('\nNon-Volatility Features Created')
 
