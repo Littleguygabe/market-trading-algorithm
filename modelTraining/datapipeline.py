@@ -3,7 +3,6 @@ from dataPipelineAlgos import handleRawDataCollection as rawDataHandler
 from dataPipelineAlgos import featureEngineering
 from dataPipelineAlgos import GARCHpipeline
 from dataPipelineAlgos import recursiveFeatureElimination
-import pandas as pd
 import os
 
 def saveInputData(feature_dataframe_arr,ref_results):
