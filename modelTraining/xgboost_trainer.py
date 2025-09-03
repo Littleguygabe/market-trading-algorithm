@@ -20,6 +20,7 @@ def dataRead(target_col):
 
             filedf = pd.read_csv(os.path.join(dataFolder, filename), index_col=0)
             filedf['Target'] = filedf[target_col].shift(-1) 
+            
 
             df_list.append(filedf)
 
@@ -28,8 +29,9 @@ def dataRead(target_col):
             print(f'Faulty Dataframe: {filedf}')
 
 
-    df = pd.concat(df_list, ignore_index=True)
+    df = pd.concat(df_list,join='inner', ignore_index=True)
     df = df.dropna()
+    print(df)
     return df
 
 def run(target_Col):
