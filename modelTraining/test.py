@@ -1,14 +1,17 @@
-import yfinance as yf
+import os
 import pandas as pd
-import multiprocessing
+from pathlib import Path
 
-
-def flatten(dataframe,ticker):
-    
 
 if __name__ == '__main__':
-    df_ticker_list = pd.read_csv('stockOptions.csv')
-    tickers_list = df_ticker_list['Ticker'].to_numpy().tolist()
-    tickers = yf.Tickers(tickers_list)
-    data = tickers.download(period='100d',interval='1d')
+    targ_dir = Path('dataPipelineOutputData')
+    stock_dir = 'stockOptions.csv'
 
+    #get the stocks listed in the stock dir
+    stock_ops = pd.read_csv(stock_dir)
+    stock_ops_list = stock_ops.values.flatten().tolist()
+    targ_dir_tick_list = [file.stem for file in targ_dir.iterdir()] 
+
+    stock_ops_set = set(stock_ops_list)
+    not_in_stock_ops_file = [ticker for ticker in targ_dir_tick_list if ticker not in stock_ops_set]
+    print(not_in_stock_ops_file)

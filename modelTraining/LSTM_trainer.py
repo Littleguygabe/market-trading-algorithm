@@ -14,8 +14,10 @@ def dataRead(target_col):
 
             filedf = pd.read_csv(os.path.join(dataFolder, filename), index_col=0)
             filedf['Target'] = filedf[target_col].shift(-1) 
-
+            # filedf = filedf.dropna()
+            # print(filedf)
             df_list.append(filedf)
+            
 
         except Exception as e:
             print(f'ERROR > Error on {filename}: {e}')
@@ -23,7 +25,7 @@ def dataRead(target_col):
 
 
     df = pd.concat(df_list, ignore_index=True)
-    df = df.dropna()
+    df = df.dropna(subset=['Target'])
     return df
 
 def run(target_col):

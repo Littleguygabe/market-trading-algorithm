@@ -12,10 +12,18 @@ import os
 
 
 def saveInputData(feature_dataframe_arr,ref_results):
+    
+
+
     save_folder_name = 'dataPipelineOutputData'
     if not os.path.exists(save_folder_name):
         os.mkdir(save_folder_name)
 
+    #first remove any existing files in the save location in case they're no longer included in the stock options but still exist resulting in unwanted data files
+    for filename in os.listdir(save_folder_name):
+        os.remove(f'{save_folder_name}/{filename}')
+
+    quit()
     
     for df in feature_dataframe_arr:
         ticker = df['Ticker'].iloc[0]

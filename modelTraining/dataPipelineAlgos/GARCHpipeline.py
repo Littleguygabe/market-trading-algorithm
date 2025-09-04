@@ -4,6 +4,8 @@ import numpy as np
 import warnings
 from arch.utility.exceptions import ConvergenceWarning
 
+warnings.filterwarnings('ignore', category=ConvergenceWarning)
+
 def generateVolatilityPrediction(df):
     output_df = df.copy()
     returns = output_df['Return'].dropna()
@@ -11,11 +13,6 @@ def generateVolatilityPrediction(df):
     if np.isclose(returns.std(), 0):
         print("\nSkipping stock with zero volatility.")
         return None
-
-    # Calculate the scaler needed to make the standard deviation of returns equal to 1.0
-    dynamic_scaler = 100
-    scaled_returns = returns * dynamic_scaler
-
 
     # dynamic model selection
 
@@ -25,19 +22,15 @@ def generateVolatilityPrediction(df):
         {'model':'ARCH','p':1},
         
     ]
-
+    scaler = 100
     results = None
     for config in models_to_try:
         try:    
             model_config = config.copy()
-            vol_model_name = model_config.pop('model') 
+            vol_model_name = model_config.pop('model')
 
-            model = arch_model(scaled_returns,vol_model_name,**model_config,dist='t')
-
-            with warnings.catch_warnings():
-                warnings.filterwarnings('ignore', category=ConvergenceWarning)
-                fit_results = model.fit(disp='off')
-
+            model = arch_model(returns*scaler,vol_model_name,**model_config,dist='t')
+            fit_results = model.fit(disp='off')
             if fit_results.convergence_flag == 0:
                 results = fit_results
                 break
@@ -48,7 +41,7 @@ def generateVolatilityPrediction(df):
     if results is None:
         return None
 
-    output_df['GARCH_volatility'] = results.conditional_volatility / dynamic_scaler
+    output_df['GARCH_volatility'] = results.conditional_volatility / scaler
 
     return output_df
 
