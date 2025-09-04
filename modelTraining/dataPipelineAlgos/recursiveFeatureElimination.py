@@ -10,7 +10,7 @@ import numpy as np
 def performRFE(df):
     df.replace([np.inf, -np.inf], np.nan, inplace=True)
     df.dropna(inplace=True)
-    X = df.drop(columns=['target','Ticker'])
+    X = df.drop(columns=['target','Ticker','Date'])
     y = df['target']
 
 

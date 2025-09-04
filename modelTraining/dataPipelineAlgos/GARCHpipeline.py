@@ -13,7 +13,7 @@ def generateVolatilityPrediction(df):
         return None
 
     # Calculate the scaler needed to make the standard deviation of returns equal to 1.0
-    dynamic_scaler = 1.0 / returns.std()
+    dynamic_scaler = 100
     scaled_returns = returns * dynamic_scaler
 
 
@@ -32,7 +32,7 @@ def generateVolatilityPrediction(df):
             model_config = config.copy()
             vol_model_name = model_config.pop('model') 
 
-            model = arch_model(scaled_returns,vol_model_name,**model_config,dist='t',rescale=False)
+            model = arch_model(scaled_returns,vol_model_name,**model_config,dist='t')
 
             with warnings.catch_warnings():
                 warnings.filterwarnings('ignore', category=ConvergenceWarning)

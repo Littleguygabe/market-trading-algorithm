@@ -5,6 +5,12 @@ from dataPipelineAlgos import GARCHpipeline
 from dataPipelineAlgos import recursiveFeatureElimination
 import os
 
+# [] -> fix the model so that the scaling works better so i dont get convergence issues (rather have bad scaling than no data)
+# [x] ->  ERROR > Could not perform RFE: float() argument must be a string or a real number, not 'Timestamp'
+#       -> issue somewhere in the RFE (thinking it could be about the date - timestamp)
+# [] -> make sure date is added to the output data csv files
+
+
 def saveInputData(feature_dataframe_arr,ref_results):
     save_folder_name = 'dataPipelineOutputData'
     if not os.path.exists(save_folder_name):
@@ -12,7 +18,6 @@ def saveInputData(feature_dataframe_arr,ref_results):
 
     
     for df in feature_dataframe_arr:
-        print(df.columns)
         ticker = df['Ticker'].iloc[0]
         save_df = df[ref_results]
         save_df.to_csv(os.path.join(save_folder_name,f'{ticker}.csv'))
@@ -40,6 +45,9 @@ if __name__ == '__main__':
     rfe_results = recursiveFeatureElimination.run(volatility_added_dataframe_arr)
     if args.target not in rfe_results:
         rfe_results.append(args.target)
+
+    if 'Date' not in rfe_results:
+        rfe_results.append('Date')
 
     saveInputData(volatility_added_dataframe_arr,rfe_results)
     print('>--------------------')

@@ -164,7 +164,6 @@ def run(raw_data_frame_arr,target_col):
     print('\033[1mRunning featureEngineering.py\033[0m')
     engineered_df_arr = []
     for i in tqdm(range(len(raw_data_frame_arr))):
-
         engineered_df_arr.append(getFeatureData(raw_data_frame_arr[i].reset_index(),target_col))
 
     print('\nNon-Volatility Features Created')

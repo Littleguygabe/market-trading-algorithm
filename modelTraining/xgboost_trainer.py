@@ -29,7 +29,7 @@ def dataRead(target_col):
             print(f'Faulty Dataframe: {filedf}')
 
 
-    df = pd.concat(df_list,join='inner', ignore_index=True)
+    df = pd.concat(df_list, ignore_index=True)
     df = df.dropna()
     print(df)
     return df

@@ -4,6 +4,7 @@ import sys
 import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
+import multiprocessing
 
 def getFileLocation(file_name):
     if os.path.exists(file_name):
@@ -66,15 +67,25 @@ def getTickerListFromFile(ticker_file):
 
     return ticker_list
 
-def getRawTickerData(ticker_list):
-    df_arr = []
+def flattenDfToArray(data,ticker_list):
+    results = []
+
     for i in tqdm(range(len(ticker_list))):
         ticker = ticker_list[i]
-        ticker_obj = yf.Ticker(ticker)
-        data = ticker_obj.history(period='1500d',interval='1d')
-        data['Ticker'] = ticker
-        df_arr.append(data)
+        ticker_data = data.xs(ticker,level=1,axis=1).copy()
+        ticker_data['Ticker'] = ticker
+        results.append(ticker_data.dropna())
 
+    return results
+
+def getRawTickerData(ticker_list):
+    df_arr = []
+    ticker_list = ticker_list.tolist()
+    tickers = yf.Tickers(ticker_list)
+    data = tickers.download(period='1500d',interval='1d',progress=True)
+    # need to re-format data into an array structure 
+    
+    df_arr = flattenDfToArray(data,ticker_list)
     return df_arr
 
 
