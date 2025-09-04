@@ -41,9 +41,13 @@ if __name__ == '__main__':
                         required=True,
                         default='Return')
 
+    parser.add_argument('--min_days_of_data','-mdd',
+                        help='The Minimum Number of days Worth of data a Stock Needs to have to be Downloaded',
+                        default = 550)
+
     args = parser.parse_args()
 
-    raw_data_frame_arr = rawDataHandler.run(args.ticker_file)
+    raw_data_frame_arr = rawDataHandler.run(args.ticker_file,args.min_days_of_data)
     feature_engineered_dataframe_arr = featureEngineering.run(raw_data_frame_arr,args.target)
     volatility_added_dataframe_arr = GARCHpipeline.run(feature_engineered_dataframe_arr)
 
