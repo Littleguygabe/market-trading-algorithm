@@ -69,12 +69,25 @@ def getTickerListFromFile(ticker_file):
 
 def flattenDfToArray(data,ticker_list):
     results = []
+    witheld_ticker_arr = []
 
     for i in tqdm(range(len(ticker_list))):
         ticker = ticker_list[i]
         ticker_data = data.xs(ticker,level=1,axis=1).copy()
         ticker_data['Ticker'] = ticker
-        results.append(ticker_data.dropna())
+        ticker_data.dropna(inplace=True)
+        if len(ticker_data)<550:
+            witheld_ticker_arr.append({'Ticker':ticker,'N_Data_Points':len(ticker_data)})
+            continue
+
+        results.append(ticker_data)
+
+    witheld_ticker_df = pd.DataFrame(witheld_ticker_arr)
+    print('--- Missed Tickers due to Lack of Data Points --- ')
+    with pd.option_context('dispaly.max_rows',200):
+        print(witheld_ticker_df)
+
+    print("----------------------------------------------------------------")
 
     return results
 
