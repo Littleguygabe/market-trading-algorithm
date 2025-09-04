@@ -1,6 +1,7 @@
 import pandas as pd
 import numpy as np
 import os
+from tqdm import tqdm
 
 ### figure out which data values need normalising and normalise them
 
@@ -47,7 +48,8 @@ def getMACDSIG(rawdf):
     rawdf = rawdf.copy()
     rawdf['MACDline'] = rawdf['EMA12'] - rawdf['EMA26']
     rawdf['SigLine'] = rawdf['MACDline'].ewm(span=9,adjust=False).mean()
-    rawdf['normMACDSIGdif'] = (rawdf['MACDline'] - rawdf['SigLine']) * 100
+    rawdf['normMACDSIGdif'] = (rawdf['MACDline'] - rawdf['SigLine'])
+
     return rawdf
 
 def getRSI(rawdf):
@@ -79,7 +81,7 @@ def getBB(rawdf):
     rawdf['lowerBand'] = rawdf['middleBand']-2*rawdf['stdDev']
 
     #how close the close is to the lower band -> difference between close and low band value as a percentage of the band width
-    rawdf['LBClsPctDif'] = (rawdf['Close']-rawdf['lowerBand'])/(rawdf['upperBand']-rawdf['lowerBand'])*100
+    rawdf['LBClsPctDif'] = (rawdf['Close']-rawdf['lowerBand'])/(rawdf['upperBand']-rawdf['lowerBand'])
 
     return rawdf
 
@@ -99,7 +101,7 @@ def getReturns(rawdf):
     return rawdf
 
 
-def getFeatureData(rawdf):
+def getFeatureData(rawdf,target_col):
     rawdf = getMAs(rawdf)
     rawdf = getMACDSIG(rawdf)
     rawdf = getRSI(rawdf)
@@ -116,8 +118,7 @@ def getFeatureData(rawdf):
     'lowerBand', 'OBV'
 ]
 
-    feature_df = rolling_normalisation(rawdf,features_to_normalise) 
-
+    feature_df = rolling_normalisation(rawdf,features_to_normalise)
 
     final_feature_columns = [
     'Date',
@@ -156,16 +157,16 @@ def getFeatureData(rawdf):
     existing_final_cols = [col for col in final_feature_columns if col in feature_df.columns]
 
     final_df = feature_df[existing_final_cols].dropna().reset_index(drop=True)
+    final_df['target'] = final_df[target_col].shift(1).dropna()
     return final_df
  
-def run(raw_dataframe,verbose=0):
-    if verbose>-1:
-        print('>--------------------')
-        print('\033[1mRunning featureEngineering.py\033[0m')
+def run(raw_data_frame_arr,target_col):
+    print('>--------------------')
+    print('\033[1mRunning featureEngineering.py\033[0m')
+    engineered_df_arr = []
+    for i in tqdm(range(len(raw_data_frame_arr))):
+        engineered_df_arr.append(getFeatureData(raw_data_frame_arr[i].reset_index(),target_col))
 
-    output_df = getFeatureData(raw_dataframe)
+    print('\nNon-Volatility Features Created')
 
-    if verbose>-1:
-        print('\nNon-Volatility Features Created')
-
-    return output_df
+    return engineered_df_arr

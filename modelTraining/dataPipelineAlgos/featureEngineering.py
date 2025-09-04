@@ -48,7 +48,8 @@ def getMACDSIG(rawdf):
     rawdf = rawdf.copy()
     rawdf['MACDline'] = rawdf['EMA12'] - rawdf['EMA26']
     rawdf['SigLine'] = rawdf['MACDline'].ewm(span=9,adjust=False).mean()
-    rawdf['normMACDSIGdif'] = (rawdf['MACDline'] - rawdf['SigLine']) * 100
+    rawdf['normMACDSIGdif'] = (rawdf['MACDline'] - rawdf['SigLine'])
+
     return rawdf
 
 def getRSI(rawdf):
@@ -80,7 +81,7 @@ def getBB(rawdf):
     rawdf['lowerBand'] = rawdf['middleBand']-2*rawdf['stdDev']
 
     #how close the close is to the lower band -> difference between close and low band value as a percentage of the band width
-    rawdf['LBClsPctDif'] = (rawdf['Close']-rawdf['lowerBand'])/(rawdf['upperBand']-rawdf['lowerBand'])*100
+    rawdf['LBClsPctDif'] = (rawdf['Close']-rawdf['lowerBand'])/(rawdf['upperBand']-rawdf['lowerBand'])
 
     return rawdf
 
